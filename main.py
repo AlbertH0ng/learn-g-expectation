@@ -109,8 +109,10 @@ t_mesh = T - s_mesh
 plt.figure()
 plt.contourf(t_mesh, x_mesh, y_pred, 100, cmap='rainbow')
 plt.colorbar()
+
 plt.xlabel('t')
 plt.ylabel('x')
-plt.title('Solution v(t, x)')
+plt.title('v(t, x) values')
+
 plt.show()
 
