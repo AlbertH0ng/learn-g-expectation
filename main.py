@@ -3,6 +3,9 @@ import numpy as np
 from deepxde.backend import tf
 import matplotlib.pyplot as plt
 
+# ========= Set Example Name =========
+example_name = "example1"
+
 # ========= Define Domain =========
 T = 10 # Terminal time
 x_min = 0  # x ∈ [x_min, x_max]
@@ -23,7 +26,7 @@ def sigma_func(t, x):
 
 def g_func(t, y, z):
     # Define the generate function g here
-    return z  # Example function
+    return z**2  # usualy in form of ay^q + b|z|^p
 
 # ========= Define PDE =================
 def pde(x, v):
@@ -113,5 +116,10 @@ plt.xlabel('t')
 plt.ylabel('x')
 plt.title('v(t, x) values')
 
+plt.savefig("Results/" + example_name + ".png")
 plt.show()
+
+# ======== Save the results ========
+model.save("Results/" + example_name + ".model")
+
 
