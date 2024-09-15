@@ -5,26 +5,25 @@ import matplotlib.pyplot as plt
 
 # ========= Define Domain =========
 T = 10 # Terminal time
-x_min = 0  # Adjust as needed
-x_max = 5.0   # Adjust as needed
+x_min = 0  # x ∈ [x_min, x_max]
+x_max = 5.0   
 
 geom = dde.geometry.Interval(x_min, x_max)
 timedomain = dde.geometry.TimeDomain(0, T)  # s ∈ [0, T]
 geomtime = dde.geometry.GeometryXTime(geom, timedomain)
 
 # ========= Define Known Functions=========
-def sigma_func(t, x):
-    # Define your sigma function here
-    return 0.3  # Example constant value
-
 def mu_func(t, x):
-    # Define your mu function here
-    return 0.2  # Example constant value
+    # Define mu, the drift function here
+    return 1  # change accordingly
 
-def g_func(t, v, sigma_v_x):
-    # Define your g function here
-    return tf.sin(v) + sigma_v_x ** 2  # Example function
+def sigma_func(t, x):
+    # Define sigma, the diffusion function here
+    return 0.5  # change accordingly
 
+def g_func(t, y, z):
+    # Define the generate function g here
+    return z  # Example function
 
 # ========= Define PDE =================
 def pde(x, v):
@@ -49,7 +48,7 @@ def pde(x, v):
 # ========= Define Initial & Boundary Conditions =========
 def ic_func(x):
     x_ = x[:, 1:2]
-    return -x_  # Given terminal condition v(T, x) = -x
+    return -x_  
 
 ic = dde.IC(
     geomtime,
@@ -62,7 +61,7 @@ def boundary_condition(x, on_boundary):
 
 def bc_func(x):
     x_ = x[:, 1:2]
-    return -x_  # Adjust as per your boundary conditions
+    return -x_  
 
 bc = dde.DirichletBC(geomtime, bc_func, boundary_condition)
 
