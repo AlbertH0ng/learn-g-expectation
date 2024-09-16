@@ -4,40 +4,37 @@ from deepxde.backend import tf
 import matplotlib.pyplot as plt
 import os
 
-# ========= Set Example Name and Model Type =========
-example_name = "constant_model"  # Options: "constant_model", "BSM_model", "OUMR_model"
-# constant_model: dX_t = 0.12 dt + 0.25 dW_t
-# BSM_model: dX_t = 0.12 X_t dt + 0.25 X_t dW_t
-# OUMR_model: dX_t = 0.5 (1 - X_t) dt + t exp(-t) dW_t
+# ========= Set Model Type and Generator Name =========
+model_type = "constant"  # Options: "constant", "BSM", "OUMR"
+# constant: dX_t = 0.12 dt + 0.2 dW_t
+# BSM: dX_t = 0.12 X_t dt + 0.25 X_t dW_t
+# OUMR: dX_t = 0.5 (1 - X_t) dt + t exp(-t) dW_t
 
-generator_name = "g_1"      # Options: "g_0", "g_1", "g_2", "g_3"
+generator_name = "g_0"      # Options: "g_0", "g_1", "g_2", "g_3"
 # g_0: g(t, y, z) = 0
-# g_1: g(t, y, z) = 2 |z + sqrt(epsilon)|
+# g_1: g(t, y, z) = 2 * sqrt(z^2 + epsilon)
 # g_2: g(t, y, z) = y + sqrt(z^2 + epsilon)
-# g_3: g(t, y, z) = (1/e) exp(y) + sqrt(z^2 + epsilon)
+# g_3: g(t, y, z) = (1/e) * exp(y) + sqrt(z^2 + epsilon)
 
+# Create a directory for the model if it doesn't exist
+if not os.path.exists(model_type):
+    os.makedirs(model_type)
 
-if not os.path.exists(example_name):
-    os.makedirs(example_name)
-
-# ========= Define Model Parameters Based on Example Name =========
-if example_name == "constant_model":
-    model_type = "constant"
+# ========= Define Model Domain Based on Model Type =========
+if model_type == "constant":
     T = 5
     x_min = 0.0
     x_max = 5.0
-elif example_name == "BSM_model":
-    model_type = "BSM"
+elif model_type == "BSM":
     T = 5
     x_min = 0.0
     x_max = 10.0
-elif example_name == "OUMR_model":
-    model_type = "OUMR"
+elif model_type == "OUMR":
     T = 10
     x_min = 0.0
     x_max = 5.0
 else:
-    raise ValueError("Invalid example_name. Choose from 'constant_model', 'BSM_model', or 'OUMR_model'.")
+    raise ValueError("Invalid model_type. Choose from 'constant', 'BSM', or 'OUMR'.")
 
 # ========= Define Domain =========
 geom = dde.geometry.Interval(x_min, x_max)
@@ -155,7 +152,6 @@ def pde(x, v):
 
     return residual
 
-
 # ========= Define Initial & Boundary Conditions =========
 def ic_func(x):
     x_ = x[:, 1:2]
@@ -167,11 +163,11 @@ ic = dde.IC(
     lambda x, on_initial: on_initial,
 )
 
-# Define the boundary condition
+# Define the boundary condition for all boundary points
 def boundary_condition(x, on_boundary):
     return on_boundary
 
-# set the points on boundary equal to classical expectation
+# Set the points on boundary equal to the classical expectation
 def bc_func(x):
     s = x[:, 0:1]  # s = T - t
     x_ = x[:, 1:2]
@@ -195,7 +191,6 @@ def bc_func(x):
         return -expected_X_T
     else:
         raise ValueError("Invalid model_type.")
-
 
 bc = dde.DirichletBC(geomtime, bc_func, boundary_condition)
 
@@ -247,16 +242,17 @@ plt.ylabel('x')
 plt.title('v(t, x) values')
 
 # Save the plot before showing it
-plt.savefig(f"{example_name}/{example_name}_{generator_name}_Result.png")
+plt.savefig(f"{model_type}/{model_type}_{generator_name}_Result.png")
 plt.show()
 
 # Plot and save the training loss history
 dde.utils.plot_loss_history(losshistory)
-plt.savefig(f"{example_name}/{example_name}_{generator_name}_loss_history.png")
+plt.savefig(f"{model_type}/{model_type}_{generator_name}_loss_history.png")
 plt.close()
 
 # ======== Save the results ========
-model.save(f"{example_name}/{example_name}_{generator_name}_model.ckpt")
+model.save(f"{model_type}/{model_type}_{generator_name}_model.ckpt")
+
 
 
 
