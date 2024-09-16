@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 import os
 
 # ========= Set Example Name and Model Type =========
-example_name = "BSM_model"  # Options: "constant_model", "BSM_model", "OUMR_model"
+example_name = "constant_model"  # Options: "constant_model", "BSM_model", "OUMR_model"
 # constant_model: dX_t = 0.12 dt + 0.25 dW_t
 # BSM_model: dX_t = 0.12 X_t dt + 0.25 X_t dW_t
 # OUMR_model: dX_t = 0.5 (1 - X_t) dt + t exp(-t) dW_t
 
 generator_name = "g_1"      # Options: "g_0", "g_1", "g_2", "g_3"
 # g_0: g(t, y, z) = 0
-# g_1: g(t, y, z) = 2 sqrt(z^2 + epsilon)
+# g_1: g(t, y, z) = 2 |z + sqrt(epsilon)|
 # g_2: g(t, y, z) = y + sqrt(z^2 + epsilon)
 # g_3: g(t, y, z) = (1/e) exp(y) + sqrt(z^2 + epsilon)
 
@@ -98,9 +98,63 @@ def pde(x, v):
     sigma_v_x = sigma_val * v_x
     g_val = g_func(t, v, sigma_v_x)
 
-    # Return the PDE residual
+    # Initialize residual to avoid UnboundLocalError
+    residual = None
+
+    # Check for NaNs or Infs
+    try:
+        v_s = tf.debugging.check_numerics(v_s, "v_s contains NaN or Inf")
+    except tf.errors.InvalidArgumentError as e:
+        print("Error in v_s:", e)
+        raise
+
+    try:
+        v_x = tf.debugging.check_numerics(v_x, "v_x contains NaN or Inf")
+    except tf.errors.InvalidArgumentError as e:
+        print("Error in v_x:", e)
+        raise
+
+    try:
+        v_xx = tf.debugging.check_numerics(v_xx, "v_xx contains NaN or Inf")
+    except tf.errors.InvalidArgumentError as e:
+        print("Error in v_xx:", e)
+        raise
+
+    try:
+        sigma_val = tf.debugging.check_numerics(sigma_val, "sigma_val contains NaN or Inf")
+    except tf.errors.InvalidArgumentError as e:
+        print("Error in sigma_val:", e)
+        raise
+
+    try:
+        mu_val = tf.debugging.check_numerics(mu_val, "mu_val contains NaN or Inf")
+    except tf.errors.InvalidArgumentError as e:
+        print("Error in mu_val:", e)
+        raise
+
+    try:
+        sigma_v_x = tf.debugging.check_numerics(sigma_v_x, "sigma_v_x contains NaN or Inf")
+    except tf.errors.InvalidArgumentError as e:
+        print("Error in sigma_v_x:", e)
+        raise
+
+    try:
+        g_val = tf.debugging.check_numerics(g_val, "g_val contains NaN or Inf")
+    except tf.errors.InvalidArgumentError as e:
+        print("Error in g_val:", e)
+        raise
+
+    # Compute residual
     residual = v_s - (0.5 * tf.square(sigma_val) * v_xx + mu_val * v_x + g_val)
+
+    try:
+        residual = tf.debugging.check_numerics(residual, "Residual contains NaN or Inf")
+    except tf.errors.InvalidArgumentError as e:
+        print("Error in residual:", e)
+        raise
+
     return residual
+
 
 # ========= Define Initial & Boundary Conditions =========
 def ic_func(x):
@@ -113,32 +167,35 @@ ic = dde.IC(
     lambda x, on_initial: on_initial,
 )
 
-# Define the boundary condition at x = x_min and x = x_max
+# Define the boundary condition
 def boundary_condition(x, on_boundary):
-    x_ = x[1]  # Extract the spatial coordinate x
-    return on_boundary and (np.isclose(x_, x_min, atol=1e-8) or np.isclose(x_, x_max, atol=1e-8))
+    return on_boundary
 
+# set the points on boundary equal to classical expectation
 def bc_func(x):
-    s = x[0]  # s = T - t
-    x_ = x[1]
+    s = x[:, 0:1]  # s = T - t
+    x_ = x[:, 1:2]
     t = T - s  # Convert back to t
 
     if model_type == "constant":
-        mu = 0.12
+        mu = tf.constant(0.12, dtype=tf.float32)
         expected_X_T = x_ + mu * (T - t)
         return -expected_X_T
     elif model_type == "BSM":
-        mu = 0.12
-        expected_X_T = x_ * np.exp(mu * (T - t))
+        mu = tf.constant(0.12, dtype=tf.float32)
+        exp_argument = mu * (T - t)
+        exp_argument = tf.clip_by_value(exp_argument, clip_value_min=-100.0, clip_value_max=100.0)  # Prevent overflow
+        expected_X_T = x_ * tf.exp(exp_argument)
         return -expected_X_T
     elif model_type == "OUMR":
-        k = 0.5
-        theta = 1.0
-        exponent = np.exp(-k * (T - t))
+        k = tf.constant(0.5, dtype=tf.float32)
+        theta = tf.constant(1.0, dtype=tf.float32)
+        exponent = tf.exp(-k * (T - t))
         expected_X_T = x_ * exponent + theta * (1 - exponent)
         return -expected_X_T
     else:
         raise ValueError("Invalid model_type.")
+
 
 bc = dde.DirichletBC(geomtime, bc_func, boundary_condition)
 
