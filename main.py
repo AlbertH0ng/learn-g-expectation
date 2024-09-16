@@ -10,7 +10,7 @@ model_type = "constant"  # Options: "constant", "BSM", "OUMR"
 # BSM: dX_t = 0.12 X_t dt + 0.25 X_t dW_t
 # OUMR: dX_t = 0.5 (1 - X_t) dt + t exp(-t) dW_t
 
-generator_name = "g_0"      # Options: "g_0", "g_1", "g_2", "g_3"
+generator_name = "g_3"      # Options: "g_0", "g_1", "g_2", "g_3"
 # g_0: g(t, y, z) = 0
 # g_1: g(t, y, z) = 2 * sqrt(z^2 + epsilon)
 # g_2: g(t, y, z) = y + sqrt(z^2 + epsilon)
@@ -32,7 +32,7 @@ elif model_type == "BSM":
 elif model_type == "OUMR":
     T = 10
     x_min = 0.0
-    x_max = 5.0
+    x_max = 2.0
 else:
     raise ValueError("Invalid model_type. Choose from 'constant', 'BSM', or 'OUMR'.")
 
