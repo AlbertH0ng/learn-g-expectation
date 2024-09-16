@@ -5,15 +5,22 @@ import matplotlib.pyplot as plt
 import os
 
 # ========= Set Example Name =========
-example_name = "BSM model"
+example_name = "OUMR model" 
+generator_name = "g_2"  
+# Choose the generator function g from the following list:
+'''
+$g_1 (t,y,z) = 2 |z|$, 
+$g_2 (t,y,z) = y + |z|$, 
+$g_3 (t,y,z) = 1/e \exp(y) + |z|$.
+'''
 
 if not os.path.exists(example_name):
     os.makedirs(example_name)
 
 # ========= Define Domain =========
-T = 1 # Terminal time
+T = 10 # Terminal time
 x_min = 0.0  # x ∈ [x_min, x_max]
-x_max = 3.0   
+x_max = 3.0  
 
 geom = dde.geometry.Interval(x_min, x_max)
 timedomain = dde.geometry.TimeDomain(0, T)  # s ∈ [0, T]
@@ -22,19 +29,23 @@ geomtime = dde.geometry.GeometryXTime(geom, timedomain)
 # ========= Define Known Functions=========
 def mu_func(t, x):
     # Define mu, the drift function here
-    return 0.12 * x  # change accordingly
+    # return 0.12 * x  # BSM model
+    return 0.5*(1 - x)  # OUMR model
 
 def sigma_func(t, x):
     # Define sigma, the diffusion function here
-    return 0.25 * x  # change accordingly
+    # return 0.25 * x  # BSM model
+    return t*tf.exp(-t)  # OUMR model
 
 def g_func(t, y, z):
     # Define the generate function g here
-    return z**2  # choose your generator function
+    # return 2*tf.abs(z)  # for g_1
+    return y + tf.abs(z) # for g_2
+    # return 1/np.e * tf.exp(y) + tf.abs(z) # for g_3
 
 # ========= Define PDE =================
 def pde(x, v):
-    s = x[:, 0:1]  # s in [0, T], s = T - t
+    s = x[:, 0:1]  # s = T - t
     x_ = x[:, 1:2]
     t = T - s  # Convert back to original time variable t
 
@@ -121,15 +132,15 @@ plt.ylabel('x')
 plt.title('v(t, x) values')
 
 # Save the plot before showing it
-plt.savefig(f"{example_name}/{example_name}_Result.png")
+plt.savefig(f"{example_name}/{example_name}_{generator_name}_Result.png")
 plt.show()
 
 # Plot and save the training loss history
 dde.utils.plot_loss_history(losshistory)
-plt.savefig(f"{example_name}/loss_history.png")
+plt.savefig(f"{example_name}/{example_name}_{generator_name}_loss_history.png")
 plt.close()
 
 # ======== Save the results ========
-model.save(f"{example_name}/model.ckpt")
+model.save(f"{example_name}/{example_name}_{generator_name}_model.ckpt")
 
 
