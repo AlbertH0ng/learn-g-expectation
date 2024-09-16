@@ -239,7 +239,7 @@ plt.contourf(t_mesh, x_mesh, y_pred, 100, cmap='rainbow')
 plt.colorbar()
 plt.xlabel('t')
 plt.ylabel('x')
-plt.title('v(t, x) values')
+plt.title(r'$v$ values for ' + model_type + ' model with $' + generator_name + '$')
 
 # Save the plot before showing it
 plt.savefig(f"{model_type}/{model_type}_{generator_name}_Result.png")
