@@ -2,14 +2,18 @@ import deepxde as dde
 import numpy as np
 from deepxde.backend import tf
 import matplotlib.pyplot as plt
+import os
 
 # ========= Set Example Name =========
-example_name = "example1"
+example_name = "BSM model"
+
+if not os.path.exists(example_name):
+    os.makedirs(example_name)
 
 # ========= Define Domain =========
-T = 10 # Terminal time
-x_min = 0  # x ∈ [x_min, x_max]
-x_max = 5.0   
+T = 1 # Terminal time
+x_min = 0.0  # x ∈ [x_min, x_max]
+x_max = 3.0   
 
 geom = dde.geometry.Interval(x_min, x_max)
 timedomain = dde.geometry.TimeDomain(0, T)  # s ∈ [0, T]
@@ -18,15 +22,15 @@ geomtime = dde.geometry.GeometryXTime(geom, timedomain)
 # ========= Define Known Functions=========
 def mu_func(t, x):
     # Define mu, the drift function here
-    return 1  # change accordingly
+    return 0.12 * x  # change accordingly
 
 def sigma_func(t, x):
     # Define sigma, the diffusion function here
-    return 0.5  # change accordingly
+    return 0.25 * x  # change accordingly
 
 def g_func(t, y, z):
     # Define the generate function g here
-    return z**2  # usualy in form of ay^q + b|z|^p
+    return z**2  # choose your generator function
 
 # ========= Define PDE =================
 def pde(x, v):
@@ -116,10 +120,16 @@ plt.xlabel('t')
 plt.ylabel('x')
 plt.title('v(t, x) values')
 
-plt.savefig("Results/" + example_name + ".png")
+# Save the plot before showing it
+plt.savefig(f"{example_name}/{example_name}_Result.png")
 plt.show()
 
+# Plot and save the training loss history
+dde.utils.plot_loss_history(losshistory)
+plt.savefig(f"{example_name}/loss_history.png")
+plt.close()
+
 # ======== Save the results ========
-model.save("Results/" + example_name + ".model")
+model.save(f"{example_name}/model.ckpt")
 
 
