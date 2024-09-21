@@ -10,7 +10,7 @@ model_type = "constant"  # Options: "constant", "BSM", "OUMR"
 # BSM: dX_t = 0.12 X_t dt + 0.25 X_t dW_t
 # OUMR: dX_t = 0.5 (1 - X_t) dt + t exp(-t) dW_t
 
-generator_name = "g_3"      # Options: "g_0", "g_1", "g_2", "g_3"
+generator_name = "g_2"      # Options: "g_0", "g_1", "g_2", "g_3"
 # g_0: g(t, y, z) = 0
 # g_1: g(t, y, z) = 2 * sqrt(z^2 + epsilon)
 # g_2: g(t, y, z) = y + sqrt(z^2 + epsilon)
@@ -153,44 +153,13 @@ def pde(x, v):
     return residual
 
 # ========= Define Initial & Boundary Conditions =========
-def ic_func(x):
-    x_ = x[:, 1:2]
-    return -x_
+# Remove the initial condition (ic) and keep only the boundary condition
 
-ic = dde.IC(
-    geomtime,
-    ic_func,
-    lambda x, on_initial: on_initial,
-)
-
-# Define the boundary condition for all boundary points
 def boundary_condition(x, on_boundary):
-    return on_boundary
+    return on_boundary and np.isclose(x[0], 0)  # s = 0 corresponds to t = T
 
-# Set the points on boundary equal to the classical expectation
 def bc_func(x):
-    s = x[:, 0:1]  # s = T - t
-    x_ = x[:, 1:2]
-    t = T - s  # Convert back to t
-
-    if model_type == "constant":
-        mu = tf.constant(0.12, dtype=tf.float32)
-        expected_X_T = x_ + mu * (T - t)
-        return -expected_X_T
-    elif model_type == "BSM":
-        mu = tf.constant(0.12, dtype=tf.float32)
-        exp_argument = mu * (T - t)
-        exp_argument = tf.clip_by_value(exp_argument, clip_value_min=-100.0, clip_value_max=100.0)  # Prevent overflow
-        expected_X_T = x_ * tf.exp(exp_argument)
-        return -expected_X_T
-    elif model_type == "OUMR":
-        k = tf.constant(0.5, dtype=tf.float32)
-        theta = tf.constant(1.0, dtype=tf.float32)
-        exponent = tf.exp(-k * (T - t))
-        expected_X_T = x_ * exponent + theta * (1 - exponent)
-        return -expected_X_T
-    else:
-        raise ValueError("Invalid model_type.")
+    return -x[:, 1:2]  # v(T,x) = -x
 
 bc = dde.DirichletBC(geomtime, bc_func, boundary_condition)
 
@@ -198,10 +167,9 @@ bc = dde.DirichletBC(geomtime, bc_func, boundary_condition)
 data = dde.data.TimePDE(
     geomtime,
     pde,
-    [ic, bc],  # Include initial and boundary conditions
+    [bc],  # Include only the boundary condition
     num_domain=4000,
     num_boundary=200,
-    num_initial=200,
 )
 
 # ========= Create Model =========

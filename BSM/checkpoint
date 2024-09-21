@@ -1,2 +1,2 @@
-model_checkpoint_path: "BSM_g_0_model.ckpt-10016.ckpt"
-all_model_checkpoint_paths: "BSM_g_0_model.ckpt-10016.ckpt"
+model_checkpoint_path: "BSM_g_3_model.ckpt-10017.ckpt"
+all_model_checkpoint_paths: "BSM_g_3_model.ckpt-10017.ckpt"
