@@ -12,10 +12,10 @@ The code implements a deep learning approach to solve partial differential equat
 
 And four different generator functions:
 
-1. $g_0: g(t, y, z) = 0$
-2. $g_1: g(t, y, z) = 2 \sqrt{z^2 + \epsilon}$
-3. $g_2: g(t, y, z) = y + \sqrt{z^2 + \epsilon}$
-4. $g_3: g(t, y, z) = (1/e) \exp(y) + \sqrt{z^2 + \epsilon}$
+1. $g_0(t, y, z) = 0$
+2. $g_1(t, y, z) = 2 \sqrt{z^2 + \epsilon}$
+3. $g_2(t, y, z) = y + \sqrt{z^2 + \epsilon}$
+4. $g_3(t, y, z) = (1/e) \exp(y) + \sqrt{z^2 + \epsilon}$
 
 ## Branch Information
 
